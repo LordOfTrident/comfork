@@ -23,6 +23,12 @@ const jobs = [
     }
 ];
 
+function sleep(msec) {
+    return function(cb) {
+        setTimeout(cb, msec);
+    };
+};
+
 var cache = {
 	"CashService": {}
 };
@@ -31,7 +37,8 @@ cache.Default = {
 	"UserID": 0,
 	"Level": 0,
     "Bal": 0,
-    "Job": "useless"
+    "Job": "useless",
+    "Cooldown": false
 };
 cache.FindByUserID = function(userid) {
 	for (var i = 0; i < cache.Collection.length; i ++) {
@@ -83,7 +90,7 @@ bot.on('message', message => {
 	message.content = message.content.toLowerCase();
 
 	if (message.author.id != bot.user.id && !message.author.bot) {
-		if (message.content.substring(0, bot.prefix.length)) {
+		if (message.content.substring(0, bot.prefix.length) == bot.prefix) {
 			var userIndex;
 
 			let result = cache.FindByUserID(message.author.id);
@@ -93,6 +100,17 @@ bot.on('message', message => {
 			} else {
 				userIndex = result;
 			};
+
+			if (cache.Collection[userIndex]["Cooldown"]) {
+				message.channel.send("```Hold your horses!```");
+
+				return;
+			};
+
+			cache.Collection[userIndex]["Cooldown"] = true;
+			setTimeout(() => {
+				cache.Collection[userIndex]["Cooldown"] = false;
+			}, 1000);
 
 		    let args = message.content.substring(bot.prefix.length).split(" ");
 
@@ -115,11 +133,24 @@ Economy {
 }
 Extra {
     com profile - Show your ComBot profile
+    com profile <ping> - Show the pinged user ComBot profile
 }\`\`\``);
 			    	break;
 			    };
 
 			    case 'profile': {
+			    	if (message.mentions.users.first()) {
+			    		const result = cache.FindByUserID(message.mentions.users.first().id);
+
+			    		if (result == -1) {
+			    			message.channel.send('```That user does not have an economy account!```')
+
+			    			break;
+			    		};
+
+			    		userIndex = result;
+			    	};
+
 			    	message.channel.send(`\`\`\`
 ComBot Profile:
 User ID: ${message.author.id}
@@ -263,6 +294,8 @@ Wallet: ${cache.Collection[userIndex]["Bal"]}\`\`\``);
 
 			    				case "reset-economy": {
 			    					cache.Collection = [];
+
+			    					message.channel.send('```Economy has been reset.```');
 
 			    					break;
 			    				};
