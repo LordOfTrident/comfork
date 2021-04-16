@@ -10,6 +10,10 @@ const admins = [
     '458280808482996234'
 ];
 
+var cooldown = {};
+cooldown.Users = [];
+cooldown.Delay = 1500;
+
 const jobs = [
     {
     	"Name": "bin-man",
@@ -23,10 +27,15 @@ const jobs = [
     }
 ];
 
-function sleep(msec) {
-    return function(cb) {
-        setTimeout(cb, msec);
-    };
+Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
 };
 
 var cache = {
@@ -37,8 +46,7 @@ cache.Default = {
 	"UserID": 0,
 	"Level": 0,
     "Bal": 0,
-    "Job": "useless",
-    "Cooldown": false
+    "Job": "useless"
 };
 cache.FindByUserID = function(userid) {
 	for (var i = 0; i < cache.Collection.length; i ++) {
@@ -101,16 +109,16 @@ bot.on('message', message => {
 				userIndex = result;
 			};
 
-			if (cache.Collection[userIndex]["Cooldown"]) {
+			if (cooldown.Users.includes(message.author.id)) {
 				message.channel.send("```Hold your horses!```");
 
 				return;
 			};
 
-			cache.Collection[userIndex]["Cooldown"] = true;
+			cooldown.Users.push(message.author.id);
 			setTimeout(() => {
-				cache.Collection[userIndex]["Cooldown"] = false;
-			}, 1000);
+				cooldown.Users.remove(message.author.id);
+			}, cooldown.Delay);
 
 		    let args = message.content.substring(bot.prefix.length).split(" ");
 
