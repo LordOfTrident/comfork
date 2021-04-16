@@ -38,9 +38,7 @@ Array.prototype.remove = function() {
     return this;
 };
 
-var cache = {
-	"CashService": {}
-};
+var cache = {};
 cache.Collection = [];
 cache.Default = {
 	"UserID": 0,
